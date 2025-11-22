@@ -1,0 +1,32 @@
+# 1. Python - Bỏ qua các file biên dịch và môi trường ảo
+__pycache__/
+*.pyc
+venv/
+.venv/
+env/
+
+# 2. Environment Variables - QUAN TRỌNG (Chứa mật khẩu DB)
+.env
+
+# 3. Data - Không up file dữ liệu nặng lên Github
+*.csv
+*.xlsx
+*.json
+data/raw/*
+data/processed/*
+# Giữ lại file .gitkeep để Github biết folder này tồn tại (nếu bạn tạo file này)
+!data/raw/.gitkeep
+
+# 4. System & IDE - File rác của Mac/Windows/VS Code
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# 5. dbt - Bỏ qua các file dbt tự sinh ra khi chạy lệnh 'dbt run'
+dbt_project/target/
+dbt_project/dbt_packages/
+dbt_project/logs/
+
+# 6. Logs - Bỏ qua file nhật ký lỗi
+*.log
