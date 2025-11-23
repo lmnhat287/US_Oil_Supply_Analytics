@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: oil_raw  # Tên định danh cho nguồn này (tùy ý đặt)
+    schema: oil_dw  # Tên schema trong cơ sở dữ liệu nơi bảng nguồn được lưu trữ
+    tables:
+      - name: stg_crude_oil_imports
+      - name: stg_federal_production

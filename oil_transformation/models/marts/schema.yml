@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: fact_oil_supply
+    description: "Bảng tổng hợp cung cầu dầu thô (Nhập khẩu + Sản xuất)"
+    columns:
+      - name: supply_id
+        description: "Khóa chính duy nhất của bảng"
+        tests:
+          - unique      # Kiểm tra xem ID có bị trùng không
+          - not_null    # Kiểm tra xem ID có bị rỗng không
+
+      - name: supply_source
+        description: "Nguồn cung (Import hoặc Domestic)"
+        tests:
+          - accepted_values:
+              values: ['Import', 'Domestic Production'] # Chỉ chấp nhận 2 giá trị này
+
+      - name: volume_bbl
+        description: "Sản lượng (Thùng)"
+        tests:
+          - not_null
