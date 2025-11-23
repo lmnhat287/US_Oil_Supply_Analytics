@@ -29,7 +29,7 @@ final_data as (
 )
 
 select
-    -- Tạo ID bằng cách nối chuỗi (Dùng COALESCE để tránh lỗi nếu có cột bị Null)
+    -- Tạo ID
     md5(concat(
         coalesce(supply_source, ''), 
         coalesce(location_name, ''), 
@@ -38,13 +38,16 @@ select
         coalesce(cast(volume_bbl as char), '')
     )) as supply_id,
     
-    -- Liệt kê rõ các cột thay vì dùng *
     report_date,
     year,
     month,
-    location_name,
-    supply_source,
-    oil_grade,
+    
+    -- === FIX LỖI COLLATION===
+    -- Ép kiểu về utf8mb4_unicode_ci để khớp với Metabase
+    cast(location_name as char) collate utf8mb4_unicode_ci as location_name,
+    cast(supply_source as char) collate utf8mb4_unicode_ci as supply_source,
+    cast(oil_grade as char) collate utf8mb4_unicode_ci as oil_grade,
+    
     volume_bbl
 
 from final_data
