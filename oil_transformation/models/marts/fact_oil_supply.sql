@@ -1,5 +1,6 @@
 with imports as (
     select
+        import_id as source_id,   -- LẤY ID GỐC
         report_date,
         year,
         month,
@@ -12,6 +13,7 @@ with imports as (
 
 production as (
     select
+        production_id as source_id, -- LẤY ID GỐC
         report_date,
         year,
         month,
@@ -29,21 +31,14 @@ final_data as (
 )
 
 select
-    -- Tạo ID
-    md5(concat(
-        coalesce(supply_source, ''), 
-        coalesce(location_name, ''), 
-        coalesce(cast(report_date as char), ''), 
-        coalesce(oil_grade, ''), 
-        coalesce(cast(volume_bbl as char), '')
-    )) as supply_id,
+    -- CÔNG THỨC ID MỚI: Dựa trên Nguồn + ID Gốc (Đảm bảo duy nhất 100%)
+    md5(concat(supply_source, '-', cast(source_id as char))) as supply_id,
     
     report_date,
     year,
     month,
     
-    -- === FIX LỖI COLLATION===
-    -- Ép kiểu về utf8mb4_unicode_ci để khớp với Metabase
+    -- Giữ nguyên fix lỗi font chữ (Collation) của tuần trước
     cast(location_name as char) collate utf8mb4_unicode_ci as location_name,
     cast(supply_source as char) collate utf8mb4_unicode_ci as supply_source,
     cast(oil_grade as char) collate utf8mb4_unicode_ci as oil_grade,

@@ -21,9 +21,12 @@ filtered as (
         
     from source
     where 
-        -- LOGIC QUAN TRỌNG: Chỉ lấy Dầu và Chỉ lấy lượng Bán ra
-        commodity = 'Oil (bbl)'
-        and disposition_code in ('01', '1')
+        -- Lấy cả Oil và Condensate (nếu muốn tính cả khí ngưng tụ - một dạng dầu lỏng)
+        commodity in ('Oil (bbl)', 'Condensate (bbl)') 
+        
+        -- CẬP NHẬT QUAN TRỌNG: Thêm mã 9 (1.1 tỷ thùng) và mã 7
+        and disposition_code in ('01', '1', '09', '9', '07', '7')
+        
         and volume > 0
 )
 
