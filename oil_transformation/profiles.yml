@@ -1,0 +1,13 @@
+oil_transformation:
+  target: dev
+  outputs:
+    dev:
+      type: mysql
+      server: "{{ env_var('DB_HOST', 'mysql') }}"
+      port: "{{ env_var('DB_PORT', 3306) | int }}"
+      schema: oil_dw
+      username: "{{ env_var('DB_USER', 'root') }}"
+      password: "{{ env_var('DB_PASSWORD', 'root') }}"
+      driver: MySQL ODBC 8.0 ANSI Driver
+      threads: 1
+

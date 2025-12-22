@@ -6,3 +6,4 @@ sources:
     tables:
       - name: stg_crude_oil_imports
       - name: stg_federal_production
+      - name: stg_oil_prices

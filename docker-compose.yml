@@ -1,33 +1,120 @@
-version: '3.8'
+
+x-airflow-common:
+  &airflow-common
+  # image: apache/airflow:2.7.1
+  build: .
+  environment:
+    &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    AIRFLOW__WEBSERVER__SECRET_KEY: 'secret_key_nay_phai_giong_nhau_cho_moi_service'
+    AIRFLOW__CORE__FERNET_KEY: ''
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
+
+    DB_HOST: mysql       # Tên service MySQL trong docker-compose
+    DB_PORT: 3306
+    DB_USER: root
+    DB_PASSWORD: root
+    DB_DATABASE: oil_dw
+
+  volumes:
+    - ./airflow/dags:/opt/airflow/dags
+    - ./scripts:/opt/airflow/scripts
+    - ./data:/opt/airflow/data
+    - ./oil_transformation:/opt/airflow/oil_transformation
+    - ./requirements.txt:/opt/airflow/requirements.txt
+  user: "${AIRFLOW_UID:-50000}:0"
+  depends_on:
+    &airflow-common-depends-on
+    postgres:
+      condition: service_healthy
+    mysql:
+      condition: service_healthy
 
 services:
-  # 1. Database MySQL
+  # 1. Database cho Airflow (Postgres) - Airflow cần cái này để sống
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 5s
+      retries: 5
+    restart: always
+
+  # 2. Airflow Webserver (Giao diện quản lý)
+  airflow-webserver:
+    <<: *airflow-common
+    command: webserver
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  # 3. Airflow Scheduler (Bộ não điều khiển)
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  # 4. Tác vụ khởi tạo Airflow (Chạy 1 lần rồi tắt)
+  airflow-init:
+    <<: *airflow-common
+    command: version
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_UPGRADE: 'true'
+      _AIRFLOW_WWW_USER_CREATE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: airflow
+      _AIRFLOW_WWW_USER_PASSWORD: airflow
+
+  # 5. Database MySQL (Kho dữ liệu của chúng ta)
   mysql:
     image: mysql:8.0
     container_name: oil_mysql
     environment:
-      MYSQL_ROOT_PASSWORD: root  # Mật khẩu root (cho môi trường local)
-      MYSQL_DATABASE: oil_dw     # Tên database sẽ tự tạo
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: oil_dw
     ports:
       - "3306:3306"
     volumes:
-      - mysql_data:/var/lib/mysql # Giữ lại dữ liệu khi tắt container
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
 
-  # 2. Metabase (Công cụ vẽ biểu đồ - Tuần 3 mới dùng nhưng cài sẵn luôn)
+  # 6. Metabase (Biểu đồ)
   metabase:
     image: metabase/metabase
     container_name: oil_metabase
     ports:
       - "3000:3000"
-    environment:
-      MB_DB_TYPE: mysql
-      MB_DB_DBNAME: metabase_internal
-      MB_DB_PORT: 3306
-      MB_DB_USER: root
-      MB_DB_PASS: root
-      MB_DB_HOST: mysql
     depends_on:
       - mysql
-
+    # environment:
+    #   MB_DB_TYPE: mysql
+    #   MB_DB_DBNAME: metabase_internal
+    #   MB_DB_PORT: 3306
+    #   MB_DB_USER: root
+    #   MB_DB_PASS: root
+    #   MB_DB_HOST: mysql
 volumes:
   mysql_data:

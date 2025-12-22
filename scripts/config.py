@@ -1,10 +1,12 @@
 import os
 
+
+db_host = os.getenv('DB_HOST', 'localhost')
 # Cấu hình kết nối Database
 DB_CONFIG = {
     'user': 'root',
     'password': 'root',  # Phải khớp với docker-compose
-    'host': 'localhost',
+    'host': db_host,
     'port': 3306,
     'database': 'oil_dw'
 }

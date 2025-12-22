@@ -19,7 +19,7 @@ renamed as (
         grade_name as oil_grade,
         
         -- LOGIC QUAN TRỌNG: Quy đổi đơn vị (Nghìn thùng -> Thùng)
-        quantity_thousand_bbl * 1000 as volume_bbl,
+        quantity_thousand_bbl as volume_bbl,
         
         ingestion_date
     from source
