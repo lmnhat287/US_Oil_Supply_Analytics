@@ -1,5 +1,5 @@
 with source as (
-    select * from {{ source('oil_raw', 'stg_federal_production') }}
+    select * from {{ source('oil_dw', 'stg_federal_production') }}
 ),
 
 filtered as (

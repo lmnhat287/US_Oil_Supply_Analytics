@@ -11,6 +11,9 @@ DB_CONFIG = {
     'database': 'oil_dw'
 }
 
+# API Key EIA (Dùng chung cho các script ETL)
+API_KEY = 'UQu9LfqVCIUQwRaicsh3cJJ9Dq6znVnpHWxlT1vL'
+
 # Đường dẫn file (Dùng đường dẫn tương đối để code chạy được trên mọi máy)
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 DATA_DIR = os.path.join(BASE_DIR, 'data', 'raw')

@@ -1,6 +1,6 @@
 with source as (
     -- Dùng hàm source() để dbt tự tìm bảng, không cần gõ tên cứng
-    select * from {{ source('oil_raw', 'stg_crude_oil_imports') }}
+    select * from {{ source('oil_dw', 'stg_crude_oil_imports') }}
 ),
 
 renamed as (

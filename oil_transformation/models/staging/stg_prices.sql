@@ -1,5 +1,5 @@
 with source as (
-    select * from {{ source('oil_raw', 'stg_oil_prices') }}
+    select * from {{ source('oil_dw', 'stg_oil_prices') }}
 ),
 
 renamed as (

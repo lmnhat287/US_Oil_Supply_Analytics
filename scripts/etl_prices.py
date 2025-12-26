@@ -1,13 +1,11 @@
 import requests
 import pandas as pd
-from config import DB_CONFIG
+from config import DB_CONFIG, API_KEY
 from sqlalchemy import create_engine, text
 import json
 from datetime import date
 import sys
 
-# API Key của bạn
-API_KEY = 'UQu9LfqVCIUQwRaicsh3cJJ9Dq6znVnpHWxlT1vL'
 # API URL lấy giá dầu WTI theo tháng
 URL = f"https://api.eia.gov/v2/petroleum/pri/spt/data/?api_key={API_KEY}&frequency=monthly&data[0]=value&facets[series][]=RWTC&sort[0][column]=period&sort[0][direction]=desc"
 
