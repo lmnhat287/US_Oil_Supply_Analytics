@@ -84,18 +84,10 @@ Các hướng dẫn dưới đây cập nhật cho phiên bản Airflow đã đ�
      docker compose logs -f scheduler
      ```
 
-   - Nếu gặp lỗi migration/permission sau khi nâng Airflow, thử xóa và khởi tạo lại metadata DB (chú ý mất dữ liệu DAG run cũ):
-
-     ```bash
-     docker compose run --rm airflow airflow db reset
-     docker compose run --rm airflow airflow db init
-     ```
 
 Ghi chú:
 - Tên services (ví dụ `mysql`, `webserver`, `scheduler`, `airflow`) có thể khác trong `docker-compose.yml` của repo — điều chỉnh lệnh cho phù hợp.
 - Nếu sử dụng executor phân tán (Celery, Kubernetes), cần cấu hình thêm broker (Redis/RabbitMQ) và workers.
 
 
----
 
-(Các phần khác trong README giữ nguyên.)
