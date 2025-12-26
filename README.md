@@ -3,8 +3,10 @@
 Dự án Data Engineering xây dựng kho dữ liệu (Data Warehouse) để phân tích mức độ phụ thuộc năng lượng của Mỹ vào nhập khẩu so với sản xuất nội địa.
 
 ## 📊 Dashboard Result
-![Dashboard Preview](dashboard_preview.png)
-*(Ảnh chụp kết quả phân tích trên Metabase)*
+![Dashboard Preview](https://github.com/lmnhat287/US_Oil_Supply_Analytics/blob/main/Screenshot%202025-12-27%20053523.png)
+![Dashboard Preview](https://github.com/lmnhat287/US_Oil_Supply_Analytics/blob/main/Screenshot%202025-12-27%20053733.png)
+![Dashboard Preview](https://github.com/lmnhat287/US_Oil_Supply_Analytics/blob/main/Screenshot%202025-12-27%20053743.png)
+*(Ảnh chụp kết quả phân tích trên Power BI)*
 
 ## 🛠️ Tech Stack
 - **Infrastructure:** Docker, Docker Compose
