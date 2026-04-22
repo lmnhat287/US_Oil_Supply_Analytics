@@ -54,7 +54,7 @@ The final data is served to **Power BI** for visualization. The dashboard includ
 
 ### Step-by-step Setup
 **1. Clone the repository**
-```bash
+bash
 git clone [https://github.com/your-username/US_Oil_Supply_Analytics.git](https://github.com/your-username/US_Oil_Supply_Analytics.git)
 cd US_Oil_Supply_Analytics
 
