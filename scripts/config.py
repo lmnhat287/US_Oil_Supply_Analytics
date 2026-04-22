@@ -1,22 +1,20 @@
 import os
 
-
-db_host = os.getenv('DB_HOST', 'localhost')
-# Cấu hình kết nối Database
-DB_CONFIG = {
-    'user': 'root',
-    'password': 'root',  # Phải khớp với docker-compose
-    'host': db_host,
-    'port': 3306,
-    'database': 'oil_dw'
-}
-
-# API Key EIA (Dùng chung cho các script ETL)
+# 1. Lấy thư mục gốc của dự án
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 API_KEY = 'UQu9LfqVCIUQwRaicsh3cJJ9Dq6znVnpHWxlT1vL'
 
-# Đường dẫn file (Dùng đường dẫn tương đối để code chạy được trên mọi máy)
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-DATA_DIR = os.path.join(BASE_DIR, 'data', 'raw')
+# 2. Quy hoạch Data Lake
+DATA_LAKE_DIR = os.path.join(BASE_DIR, 'data_lake')
+RAW_DIR = os.path.join(DATA_LAKE_DIR, 'raw')
+PROCESSED_DIR = os.path.join(DATA_LAKE_DIR, 'processed')
 
-IMPORTS_CSV = os.path.join(DATA_DIR, 'data.csv')
-PRODUCTION_CSV = os.path.join(DATA_DIR, 'OGORBcsv.csv')
+# 3. Đường dẫn cụ thể cho các file gốc (Để script đọc)
+IMPORTS_CSV = os.path.join(RAW_DIR, 'data.csv')
+PRODUCTION_CSV = os.path.join(RAW_DIR, 'OGORBcsv.csv')
+
+# 4. Đường dẫn xuất file Parquet (Để script ghi)
+IMPORTS_PARQUET = os.path.join(PROCESSED_DIR, 'stg_crude_oil_imports.parquet')
+PRODUCTION_PARQUET = os.path.join(PROCESSED_DIR, 'stg_federal_production.parquet')
+PRICES_PARQUET = os.path.join(PROCESSED_DIR, 'stg_oil_prices.parquet')
+EIA_ADVANCED_PARQUET = os.path.join(PROCESSED_DIR, 'stg_eia_advanced.parquet')

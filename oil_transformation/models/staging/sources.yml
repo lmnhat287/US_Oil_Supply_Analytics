@@ -1,12 +1,14 @@
 version: 2
 
 sources:
-  - name: oil_dw  # Tên định danh cho nguồn này (tùy ý đặt)
-    schema: oil_dw  # Tên schema trong cơ sở dữ liệu nơi bảng nguồn được lưu trữ
+  - name: data_lake
+    description: "Data Lake chứa các file Parquet đã qua sơ chế"
+    meta:
+      external_location: "../data_lake/processed/{name}.parquet"
     tables:
       - name: stg_crude_oil_imports
       - name: stg_federal_production
       - name: stg_oil_prices
       - name: stg_oil_stocks
       - name: stg_refinery_inputs
-      - name: stg_oil_exports
+      - name: stg_oil_exports  # <-- PHẢI CÓ DÒNG NÀY

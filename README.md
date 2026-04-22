@@ -1,93 +1,86 @@
-# US Oil Supply Chain Analytics 🛢️
+# 🛢️ CrudeFlow Pipeline (Data Engineering Pipeline)
 
-Dự án Data Engineering xây dựng kho dữ liệu (Data Warehouse) để phân tích mức độ phụ thuộc năng lượng của Mỹ vào nhập khẩu so với sản xuất nội địa.
+This repository contains the final project for the **Data Engineering Zoomcamp**. It is an End-to-End Data Pipeline designed to collect, process, and visualize the United States oil market data, helping stakeholders analyze supply-chain balances, price trends, and import/export ratios.
 
-## 📊 Dashboard Result
-![Dashboard Preview](https://github.com/lmnhat287/US_Oil_Supply_Analytics/blob/main/Screenshot%202025-12-27%20053523.png)
-![Dashboard Preview](https://github.com/lmnhat287/US_Oil_Supply_Analytics/blob/main/Screenshot%202025-12-27%20053733.png)
-![Dashboard Preview](https://github.com/lmnhat287/US_Oil_Supply_Analytics/blob/main/Screenshot%202025-12-27%20053743.png)
-*(Ảnh chụp kết quả phân tích trên Power BI)*
+## 📌 1. Problem Description
+Understanding the dynamics of the oil market requires tracking multiple indicators simultaneously. This project builds an automated pipeline to monitor key metrics such as **WTI Crude Oil Prices, Commercial Inventories, Refinery Inputs, and Import/Export volumes**. 
 
-## 🛠️ Tech Stack
-- **Infrastructure:** Docker, Docker Compose
-- **Database:** MySQL 8.0
-- **ETL:** Python (Pandas, SQLAlchemy)
-- **Transformation:** dbt Core (Data Build Tool)
-- **Visualization:** Power Bi
-- **Automatic:** Airflow
+By transforming raw API data and static CSVs into a centralized Data Lakehouse, the system empowers data-driven business decisions through an interactive Power BI dashboard.
 
-## 🚀 How to run
+## 🏗️ 2. Architecture & Technologies
+The project adopts a **Local Modern Data Stack** approach, completely containerized for reproducibility.
 
-Các hướng dẫn dưới đây cập nhật cho phiên bản Airflow đã được nâng cấp. Hướng dẫn minh họa sử dụng Docker Compose (Docker Compose V2 - `docker compose`). Nếu bạn đang dùng `docker-compose` (V1) hãy thay đổi lệnh tương ứng.
+* **Language:** Python
+* **Orchestration:** Apache Airflow (Dockerized)
+* **Data Ingestion:** Python Requests / Pandas
+* **Data Lake:** Local File System (Parquet format)
+* **Data Warehouse:** DuckDB (In-process analytical database)
+* **Data Transformation:** dbt Core (Data Build Tool)
+* **Visualization:** Power BI (via Python Script / ODBC)
 
-1. Chuẩn bị
-   - Cài đặt Docker và Docker Compose. Kiểm tra bằng `docker --version` và `docker compose version`.
-   - Sao chép file môi trường mẫu và chỉnh sửa các biến cần thiết:
+![Architecture Diagram](https://img.shields.io/badge/Architecture-Medallion_Data_Lakehouse-blue)
+*(Note: You can later add a screenshot of your architecture diagram here)*
 
-     ```bash
-     cp .env.example .env
-     # chỉnh giá trị như MYSQL_ROOT_PASSWORD, MYSQL_DATABASE, AIRFLOW__CORE__FERNET_KEY, v.v.
-     ```
+## 📥 3. Data Ingestion (Extraction & Loading)
+Data is gathered from multiple sources:
+1. **U.S. Energy Information Administration (EIA) API:** Fetches daily market fluctuations (oil prices, exports, stocks).
+2. **U.S. ONRR Datasets:** Heavy static CSV files containing federal production and crude oil import data.
 
-2. Khởi động cơ sở dữ liệu
+**Airflow DAGs:**
+* `01_init_oil_history`: A one-time DAG to load historical CSV data and past API records into the Data Lake.
+* `02_daily_price_update`: A scheduled DAG (`0 18 * * *` UTC) that fetches incremental daily API data.
+* `03_data_lake_backup`: A weekly maintenance DAG to compress and archive the Data Lake.
 
-   - Đảm bảo MySQL được cấu hình trong `docker-compose.yml`. Khởi động MySQL trước (nếu bạn muốn):
+## 🗄️ 4. Data Lakehouse & Transformations (dbt)
+Instead of a traditional RDBMS like MySQL, this pipeline leverages **DuckDB** reading directly from **Parquet** files (Data Lake), offering blazing-fast analytical performance.
 
-     ```bash
-     docker compose up -d mysql
-     # hoặc khởi động toàn bộ stack:
-     docker compose up -d --build
-     ```
+**dbt is used to enforce the Medallion Architecture:**
+* **Silver Layer (Staging):** Standardizes column names, casts data types (Dates, Doubles), and cleans raw Parquet data (e.g., `stg_prices`, `stg_imports`).
+* **Gold Layer (Marts/Facts):** Handles data frequency mismatches (daily prices vs. monthly production) and applies complex joins to create the final `mart_supply_chain` table.
+* **Data Quality:** Configured generic tests (`not_null`, `accepted_values`) in `schema.yml` to ensure pipeline integrity.
 
-3. Cài đặt và chạy dbt (tùy chọn, để build models vào data warehouse)
+## 📊 5. Dashboard
+The final data is served to **Power BI** for visualization. The dashboard includes:
+* **Market Overview:** A combined Line/Bar chart showing the inverse correlation between Oil Stocks and WTI Prices.
+* **Supply Analysis:** Stacked bar charts and donuts comparing domestic production vs. imported oil volumes.
+* **Seasonality:** Historical price tracking across different months and years.
 
-   - Vào container hoặc trên máy host có môi trường dbt cấu hình:
+## 🚀 6. Reproducibility (How to run this project)
 
-     ```bash
-     # Cài đặt dependencies và thực thi dbt
-     dbt deps
-     dbt seed
-     dbt run
-     ```
+### Prerequisites
+* Docker & Docker Compose
+* Python 3.10+
+* dbt-duckdb
 
-4. Khởi tạo Airflow (bước quan trọng sau khi cập nhật Airflow)
+### Step-by-step Setup
+**1. Clone the repository**
+```bash
+git clone [https://github.com/your-username/US_Oil_Supply_Analytics.git](https://github.com/your-username/US_Oil_Supply_Analytics.git)
+cd US_Oil_Supply_Analytics
 
-   - Nếu `docker-compose.yml` có service để khởi tạo Airflow (ví dụ `airflow-init`), chạy nó:
+**2. Start the Airflow Infrastructure**
 
-     ```bash
-     docker compose run --rm airflow airflow db init
-     docker compose run --rm airflow airflow users create \
-       --username admin --firstname Admin --lastname User --role Admin --email admin@example.com
-     ```
+Bash
+docker-compose up -d
+Access the Airflow UI at http://localhost:8080 (Default login: airflow/airflow). Trigger the 01_init_oil_history DAG to populate the Data Lake.
 
-   - Một số cấu hình Compose dùng entrypoint `airflow scheduler` / `airflow webserver`. Các lệnh trên đảm bảo metadata database được khởi tạo và tạo user admin.
+**3. Setup dbt Environment**
 
-5. Khởi động Airflow webserver và scheduler
+Bash
+python -m venv venv
+source venv/Scripts/activate  # (or venv\Scripts\activate on Windows)
+pip install dbt-duckdb pandas requests
+**4. Run dbt Transformations**
 
-   ```bash
-   docker compose up -d
-   # hoặc chỉ start airflow service nếu muốn
-   docker compose up -d webserver scheduler
-   ```
+Bash
+cd oil_transformation
+dbt debug
+dbt build
+**5. Connect to Power BI**
+Open Power BI Desktop, use the Python Script connector, and run:
 
-6. Kiểm tra và trigger DAGs
-
-   - Mở UI Airflow: http://localhost:8080
-   - Đăng nhập bằng user đã tạo (username: `admin` trong ví dụ). Kích hoạt hoặc trigger các DAG cần chạy.
-
-7. Logs & troubleshooting
-
-   - Xem logs service:
-
-     ```bash
-     docker compose logs -f webserver
-     docker compose logs -f scheduler
-     ```
-
-
-Ghi chú:
-- Tên services (ví dụ `mysql`, `webserver`, `scheduler`, `airflow`) có thể khác trong `docker-compose.yml` của repo — điều chỉnh lệnh cho phù hợp.
-- Nếu sử dụng executor phân tán (Celery, Kubernetes), cần cấu hình thêm broker (Redis/RabbitMQ) và workers.
-
-
-
+Python
+import duckdb
+con = duckdb.connect(r'path/to/your/data_lake/processed/zoomcamp_dw.duckdb', read_only=True)
+mart_supply_chain = con.execute("SELECT * FROM mart_supply_chain").df()
+con.close()

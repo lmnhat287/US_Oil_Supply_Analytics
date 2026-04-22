@@ -1,51 +1,39 @@
 {{ config(materialized='table') }}
 
-WITH prices AS (
+WITH imports AS (
     SELECT 
-        -- Chuyển ngày cụ thể về ngày đầu tháng (Ví dụ: 2023-01-15 -> 2023-01-01)
-        DATE_FORMAT(price_date, '%Y-%m-01') as month,
-        AVG(price_wti) as avg_price_wti
-    FROM {{ source('oil_dw', 'stg_oil_prices') }}
+        date_trunc('month', ingestion_date) AS report_month,
+        SUM(quantity_thousand_bbl) AS total_imported_bbl
+    FROM {{ ref('stg_imports') }}
     GROUP BY 1
 ),
 
-stocks AS (
+production AS (
     SELECT 
-        DATE_FORMAT(`date`, '%Y-%m-01') as month,
-        -- Tồn kho lấy trung bình các tuần trong tháng là hợp lý nhất
-        AVG(value) as avg_stocks_qty
-    FROM {{ source('oil_dw', 'stg_oil_stocks') }}
+        date_trunc('month', production_date) AS report_month,
+        SUM(volume) AS total_production_bbl
+    FROM {{ ref('stg_production') }}
     GROUP BY 1
 ),
 
-refinery AS (
-    SELECT 
-        DATE_FORMAT(`date`, '%Y-%m-01') as month,
-        -- Công suất lọc dầu lấy trung bình
-        AVG(value) as avg_refinery_input_qty
-    FROM {{ source('oil_dw', 'stg_refinery_inputs') }}
-    GROUP BY 1
-),
-
+-- Nếu bạn chưa tạo file stg_oil_exports.sql trong thư mục staging, 
+-- thì mới dùng tạm hàm source đọc thẳng từ Parquet như bên dưới
 exports AS (
     SELECT 
-        DATE_FORMAT(`date`, '%Y-%m-01') as month,
-        -- Xuất khẩu vốn dĩ đã là monthly rồi, nhưng group by cho chắc
-        MAX(value) as total_export_qty
-    FROM {{ source('oil_dw', 'stg_oil_exports') }}
+        date_trunc('month', date) AS report_month,
+        SUM(value) AS total_exported_bbl
+    FROM {{ source('data_lake', 'stg_oil_exports') }}
     GROUP BY 1
 )
 
 SELECT 
-    -- Chuyển lại string thành dạng Date để Power BI hiểu là trục thời gian
-    STR_TO_DATE(p.month, '%Y-%m-%d') as `month`,
-    ROUND(p.avg_price_wti, 2) as price_wti,
-    ROUND(s.avg_stocks_qty, 0) as stocks_qty,
-    ROUND(r.avg_refinery_input_qty, 0) as refinery_input_qty,
-    ROUND(e.total_export_qty, 0) as export_qty
-FROM prices p
-LEFT JOIN stocks s ON p.month = s.month
-LEFT JOIN refinery r ON p.month = r.month
-LEFT JOIN exports e ON p.month = e.month
-WHERE p.month >= '2020-01-01'
-ORDER BY p.month DESC
+    COALESCE(p.report_month, i.report_month, e.report_month) AS report_month,
+    COALESCE(p.total_production_bbl, 0) AS total_production_bbl,
+    COALESCE(i.total_imported_bbl, 0) AS total_imported_bbl,
+    COALESCE(e.total_exported_bbl, 0) AS total_exported_bbl,
+    -- Tính toán cán cân cung cầu cơ bản
+    (COALESCE(p.total_production_bbl, 0) + COALESCE(i.total_imported_bbl, 0) - COALESCE(e.total_exported_bbl, 0)) AS net_supply_bbl
+FROM production p
+FULL OUTER JOIN imports i ON p.report_month = i.report_month
+FULL OUTER JOIN exports e ON p.report_month = e.report_month
+ORDER BY report_month DESC

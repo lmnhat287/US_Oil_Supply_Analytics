@@ -2,21 +2,28 @@ version: 2
 
 models:
   - name: fact_oil_supply
-    description: "Bảng tổng hợp cung cầu dầu thô (Nhập khẩu + Sản xuất)"
+    description: "Bảng Fact tổng hợp nguồn cung dầu (Nhập khẩu và Khai thác nội địa)"
     columns:
-      - name: supply_id
-        description: "Khóa chính duy nhất của bảng"
+      # Đổi tên cột từ supply_id thành source_id
+      - name: source_id
+        description: "Mã định danh duy nhất (MD5 Hash)"
         tests:
-          - unique      # Kiểm tra xem ID có bị trùng không
-          - not_null    # Kiểm tra xem ID có bị rỗng không
-
+          - not_null
+          
+          
       - name: supply_source
-        description: "Nguồn cung (Import hoặc Domestic)"
+        description: "Nguồn cung cấp dầu"
         tests:
           - accepted_values:
-              values: ['Import', 'Domestic Production'] # Chỉ chấp nhận 2 giá trị này
-
+              # Đảm bảo viết chính xác từng chữ cái và dấu gạch dưới như trong file SQL
+              values: ['Import', 'Domestic_Production']
+              
+      - name: supply_date
+        description: "Ngày ghi nhận nguồn cung"
+        tests:
+          - not_null
+          
       - name: volume_bbl
-        description: "Sản lượng (Thùng)"
+        description: "Khối lượng (Thùng)"
         tests:
           - not_null

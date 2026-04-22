@@ -30,3 +30,33 @@ dbt_project/logs/
 
 # 6. Logs - Bỏ qua file nhật ký lỗi
 *.log
+
+# Python & Virtual Environment
+venv/
+env/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Airflow
+logs/
+airflow-webserver.pid
+airflow.cfg
+standalon_admin_password.txt
+
+# Databases & Data Lake (Rất quan trọng - Không push data lên Github)
+*.duckdb
+*.wal
+data_lake/raw/*
+data_lake/processed/*
+!data_lake/raw/.gitkeep
+!data_lake/processed/.gitkeep
+
+# dbt
+oil_transformation/target/
+oil_transformation/dbt_packages/
+oil_transformation/logs/
+
+# Secrets & Configs
+.env
+profiles.yml

@@ -1,16 +1,17 @@
 import pandas as pd
-from sqlalchemy import create_engine, text
-from config import DB_CONFIG, PRODUCTION_CSV
 from datetime import date
 import sys
+import os
+
+# Import các đường dẫn từ config
+from config import PRODUCTION_CSV, PRODUCTION_PARQUET, PROCESSED_DIR
 
 def load_production():
-    # Tạo chuỗi kết nối
-    conn_str = f"mysql+pymysql://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
-    engine = create_engine(conn_str, pool_pre_ping=True, pool_recycle=3600,connect_args={'connect_timeout': 60})
-
-    print(f"🚀 Đang đọc file: {PRODUCTION_CSV}")
+    print(f"🚀 Đang đọc file gốc từ: {PRODUCTION_CSV}")
     try:
+        if not os.path.exists(PRODUCTION_CSV):
+            raise FileNotFoundError(f"Không tìm thấy file {PRODUCTION_CSV}. Vui lòng kiểm tra thư mục raw.")
+
         df = pd.read_csv(PRODUCTION_CSV)
         
         # Mapping cột
@@ -33,7 +34,7 @@ def load_production():
         df['fips_code'] = df['fips_code'].astype(str).str.replace(r'\.0$', '', regex=True).replace('nan', None)
         df['disposition_code'] = df['disposition_code'].astype(str)
         
-        df['ingestion_date'] = date.today()
+        df['ingestion_date'] = pd.to_datetime(date.today())
 
         # Chọn cột
         cols = ['production_date', 'land_class', 'land_category', 'state', 'county',
@@ -41,22 +42,18 @@ def load_production():
                 'disposition_desc', 'volume', 'ingestion_date']
         df = df[cols]
 
-        print(f"📥 Đang nạp {len(df)} dòng vào bảng 'stg_federal_production'...")
-        
-        # Sử dụng connection transaction để đảm bảo an toàn
-        with engine.begin() as connection:
-            # 1. Nạp dữ liệu (replace sẽ drop bảng cũ và tạo mới)
-            df.to_sql('stg_federal_production', connection, if_exists='replace', index=False,chunksize=500, method='multi')
-            
-            # 2. Thêm Primary Key ngay lập tức
-            print("⚙️ Đang thêm Primary Key...")
-            connection.execute(text("ALTER TABLE stg_federal_production ADD COLUMN id BIGINT AUTO_INCREMENT PRIMARY KEY FIRST;"))
+        # Đảm bảo thư mục processed đã tồn tại trước khi lưu
+        os.makedirs(PROCESSED_DIR, exist_ok=True)
 
-        print("✅ Hoàn thành Production!")
+        print(f"📥 Đang xuất {len(df)} dòng thành file Parquet...")
+        
+        # Lưu thành file Parquet
+        df.to_parquet(PRODUCTION_PARQUET, engine='pyarrow', index=False)
+
+        print(f"✅ Hoàn thành! File đã được lưu tại: {PRODUCTION_PARQUET}")
 
     except Exception as e:
         print(f"❌ Lỗi nghiêm trọng: {e}")
-        # QUAN TRỌNG: Raise lỗi để Airflow đánh dấu task là Failed
         sys.exit(1)
 
 if __name__ == "__main__":

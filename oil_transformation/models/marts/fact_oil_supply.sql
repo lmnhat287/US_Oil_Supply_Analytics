@@ -1,48 +1,27 @@
-with imports as (
-    select
-        import_id as source_id,   -- LẤY ID GỐC
-        report_date,
-        year,
-        month,
-        origin_location as location_name,
-        oil_grade,
-        'Import' as supply_source,
-        volume_bbl
-    from {{ ref('stg_imports') }}
+{{ config(materialized='table') }}
+
+WITH imports AS (
+    SELECT 
+        -- Nạp thêm destination_name và grade_name vào hàm băm
+        md5(concat(year, '-', month, '-', origin_name, '-', destination_name, '-', grade_name)) AS source_id,
+        'Import' AS supply_source,
+        make_date(CAST(year AS INTEGER), CAST(month AS INTEGER), 1) AS supply_date,
+        quantity_thousand_bbl AS volume_bbl
+    FROM {{ ref('stg_imports') }}
+    WHERE quantity_thousand_bbl IS NOT NULL
 ),
 
-production as (
-    select
-        production_id as source_id, -- LẤY ID GỐC
-        report_date,
-        year,
-        month,
-        origin_location as location_name,
-        oil_grade,
-        'Domestic Production' as supply_source,
-        volume_bbl
-    from {{ ref('stg_production') }}
-),
-
-final_data as (
-    select * from imports
-    union all
-    select * from production
+production AS (
+    SELECT 
+        -- Nạp thêm county, commodity và land_class vào hàm băm
+        md5(concat(production_date, '-', state, '-', COALESCE(county, 'none'), '-', commodity, '-', land_class)) AS source_id,
+        'Domestic_Production' AS supply_source,
+        production_date AS supply_date,
+        volume AS volume_bbl
+    FROM {{ ref('stg_production') }}
+    WHERE volume IS NOT NULL
 )
 
-select
-    -- CÔNG THỨC ID MỚI: Dựa trên Nguồn + ID Gốc (Đảm bảo duy nhất 100%)
-    md5(concat(supply_source, '-', cast(source_id as char))) as supply_id,
-    
-    report_date,
-    year,
-    month,
-    
-    -- Giữ nguyên fix lỗi font chữ (Collation) của tuần trước
-    cast(location_name as char) collate utf8mb4_unicode_ci as location_name,
-    cast(supply_source as char) collate utf8mb4_unicode_ci as supply_source,
-    cast(oil_grade as char) collate utf8mb4_unicode_ci as oil_grade,
-    
-    volume_bbl
-
-from final_data
+SELECT * FROM imports
+UNION ALL
+SELECT * FROM production
